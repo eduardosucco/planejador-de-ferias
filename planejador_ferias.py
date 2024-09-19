@@ -5,6 +5,8 @@ from streamlit_calendar import calendar
 import random
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import os
+import json
 
 # Configuração do Google Sheets
 SHEET_NAME = 'planejamento_ferias'  # Substitua pelo nome da sua planilha
@@ -13,8 +15,14 @@ SHEET_ID = '1niEXvLi2C5qXOXy2bn5G1i-2L4UBPBiKlcGO_9LK5nw'  # ID da sua planilha
 # Configurações de API do Google Sheets
 def configurar_gspread():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+
+    # Carrega as credenciais do segredo do GitHub Actions ou variável de ambiente
+    credentials_info = os.getenv('GOOGLE_CREDENTIALS')  # Acessa o segredo no ambiente
+    creds_dict = json.loads(credentials_info)  # Converte o JSON string para um dicionário
+
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
     client = gspread.authorize(creds)
+
     return client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
 
 # Nome das colunas na planilha
