@@ -1,7 +1,3 @@
-Aqui está um exemplo de README para leigos utilizarem essa aplicação de planejamento de férias desenvolvida em Streamlit. O objetivo é explicar de forma clara e simples como a aplicação funciona e como configurá-la.
-
----
-
 # Aplicação de Planejamento de Férias
 
 ## Introdução
@@ -96,7 +92,3 @@ A aplicação será aberta no seu navegador.
 - **Armazenamento de dados**: Os dados são armazenados diretamente no Google Sheets, e todas as alterações feitas na aplicação são automaticamente refletidas na planilha.
 - **Filtro de áreas**: Você pode filtrar os funcionários por área usando o seletor acima da tabela.
 - **Personalização de cores**: As cores dos eventos no calendário são geradas automaticamente para cada funcionário e visam facilitar a visualização dos períodos de férias.
-
----
-
-Este guia deve ajudar qualquer pessoa, mesmo sem muita experiência técnica, a configurar e utilizar a aplicação de planejamento de férias.
