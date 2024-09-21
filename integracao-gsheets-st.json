@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "meuprojeto-389913",
+  "private_key_id": "1879009ebee44b5a40af57464304c9e7714b1da3",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQC+1X8CeQHOCPA/\nyqfmvsdSbrFdejinnTOAYncjbebDOmfBNxQzys4Agx51aFdo2sNht3L+Tq24T7KN\nyWQLCWqUhGHk4JGkadJG73TgUsioePXVB46T6c7M1R0zJK9Ynr0V+plM9iOAipxA\nXWyIQ6g60r0L9Xh90KU0qaelgyrUAjMcJaXS4Mo5c1wyhH693QEDFog0dX4c++Og\nDAZ8cPY06B3yAL1Lt8e/zdp+vNs8fK3GQsq/Ma/SB7/p1s+5gnUbJn1oZGUjNc+d\njOSKYSqICCCFO42bzt0svzGyNLhLxPJ4C4kuRwDDJgO6BCCEWwozRjd2k49WcFBl\n5ljW8wk3AgMBAAECgf8tGUdqzi4fAv3EFaCYZ32zfXVtIfVBp2UEckC1nsNqX+Ml\nRl7/3m3QsSwBkycVIJ4L+c6zSuTDKhKIb4+1DASkFKUN8gR5VojbOrvkR6wkJHH0\nZlTLn/W/cp3z+Dd4Ogt1pkOUbJb3Scqja3C6w0J+pE8JBHn1QdnJGE8GTnlQoMsi\nSnZDf+qGUqvfDzy9b5upkhsCEu8vbMqq6FJdWL94Sh7TUjygdD5eRemD77zdsvCv\nphopxjvTWvsqzX5vO3G96Fv3p4VPAemsG7s5kUOwzaV6sPdqcWrO/cAWADysr3ad\nTnSzvemEhHlwR6EiJp9Yng33UaMb7WeDkt3FY0ECgYEA+wJSsAiKppb52ciKn8ZJ\nW4Teh/gvB3pOIY4YEAFssiFikE8TUdJbUNj2mTPOQ2QZVSaxM2gPWOQFNICljKtb\ns30S2aWhiaO73ILhysrxICkc9hDkmkNBOue1xDKHgbrLwxXa6zdO2LfUvuJ56thO\nNvpVeGdkvzcSD7KwpNkD48ECgYEAwqDfP5v0Dl/gWWTEhNcbscVlaa/hJ0HzrIV5\nTBKid6EdgHSg/a1yK3z8Jq8CrdaKP7iUmkBiPzvp+VTzOZa3Iwy4PJ68j309xenq\n+rfThhrt+Jj+Uhl3EVZZk0FCD727PwpN8HDX7/AcaP6pqEmKr0Sep27syhSER0ui\nHFF8yvcCgYBTMyrrVHl4zJRWnsVsPlJ0dm84jIgyJ1UchDfvnjlENhKwmLVjqqFA\nBBqBH43gAp7u/ZtA2d40bahYBchZ/zavIOcNo3wO3mnXpr5m9KvGKDqESYcsptxJ\nRSKXvNPzqVH/ARCGZNfKt+xZtUIKGNacHJAWD9dyFjPzZhxtF83VQQKBgQC/uJTy\nJgAeANgRdzAW44cGcTrbB0Q11cPh2IGKLHkaev2CwmCsQ6VJrY791DxBXitFZeAM\nqwuc2ro6wDHwMsUoo6kBHiUE/AxT3393hom5euGcl6k+2pLt4y/N3OTkeLPw/4eT\nKLWuR8rUqrgZbIhO6ruWl7BtyBQd3yVL3AGgNQKBgAH1f08hp8XdEPWXd/JXZcLi\n4A/ijeMh4jaiNYqZeKpi3PJtFnWNJUzGM+dHGXC/gdbnBAC/Gun8kFNwZT8+xmjS\nzHackT3LEPgbO1pkixdPIxD8oEWFOeRCPrNd7hBSzG1I6BlqAsfjL6VehlnBw3Yb\nJnfUjnGYgkElHligglMs\n-----END PRIVATE KEY-----\n",
+  "client_email": "integracao-gsheets-st@meuprojeto-389913.iam.gserviceaccount.com",
+  "client_id": "114316372812225538511",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/integracao-gsheets-st%40meuprojeto-389913.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
