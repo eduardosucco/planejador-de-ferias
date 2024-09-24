@@ -27,12 +27,17 @@ def load_data():
 
 # Função para salvar dados no Supabase
 def save_data(data):
+    # Adiciona novos dados
     for _, row in data.iterrows():
-        supabase.table('planejamento_ferias').insert(row.to_dict()).execute()
+        # O método insert pode ser usado para adicionar uma nova linha
+        row_dict = row.to_dict()
+        # Remova a chave 'id' para deixar que o banco de dados gere o ID automaticamente
+        row_dict.pop('id', None)
+        supabase.table('planejamento_ferias').insert(row_dict).execute()
 
 # Função para deletar um funcionário do Supabase
-def delete_funcionario(id):
-    supabase.table('planejamento_ferias').delete().eq('id', id).execute()
+def delete_funcionario(funcionario_id):
+    supabase.table('planejamento_ferias').delete().eq('id', funcionario_id).execute()
 
 # Função para adicionar ou editar funcionário
 def gerenciar_funcionarios():
@@ -48,17 +53,17 @@ def gerenciar_funcionarios():
         inicio_fim = st.date_input(
             "Selecione o período de férias",
             format="DD/MM/YYYY",
-            value=(jan_1, datetime(next_year, 1, 7).date()),  
+            value=(jan_1, datetime(next_year, 1, 7).date()),  # Valor padrão
             min_value=jan_1,
             max_value=dec_31,
         )
         
         inicio, fim = inicio_fim
+        
         duracao_dias = (fim - inicio).days
 
         if st.form_submit_button("Salvar"):
             novo_funcionario = pd.DataFrame({
-                "id": [len(st.session_state.funcionarios_data) + 1],
                 "funcionario": [funcionario],
                 "area": [area],
                 "inicio": [inicio.strftime('%Y-%m-%d')],
@@ -73,7 +78,7 @@ def gerenciar_funcionarios():
 
             save_data(st.session_state.funcionarios_data)
             st.session_state.show_form = False
-            st.rerun()
+            st.rerun()  # Força a atualização da página
 
 # Função para gerar uma cor escura
 def gerar_cor_escura():
@@ -122,11 +127,13 @@ def exibir_tabela():
             st.session_state.show_form = True
         
         if cols[6].button("❌", key=f"remove_{index}"):
-            delete_funcionario(row["id"])  # Chama a função para deletar no Supabase
+            funcionario_id = row["id"]  # ID do funcionário a ser removido
+            delete_funcionario(funcionario_id)  # Deleta do banco
             st.session_state.funcionarios_data.drop(index, inplace=True)
             st.session_state.funcionarios_data.reset_index(drop=True, inplace=True)
-            st.session_state.cores = None  
-            st.rerun()  
+            st.session_state.cores = None  # Limpar as cores para garantir a recalculação
+            st.rerun()  # Força a atualização da página
+  
 
 # Função para exibir calendário de férias
 def exibir_calendario():
