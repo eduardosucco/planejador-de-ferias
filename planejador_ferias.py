@@ -16,7 +16,7 @@ def configurar_gspread():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     
     # Carrega as credenciais do arquivo JSON localizado na raiz do projeto
-    creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+    creds = ServiceAccountCredentials.from_json_keyfile_name('integracao_gsheet.json', scope)
     client = gspread.authorize(creds)
 
     return client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
