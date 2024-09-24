@@ -78,7 +78,7 @@ def gerenciar_funcionarios():
             st.session_state.show_form = False
             st.session_state.edit_mode = False
             st.session_state.edit_index = None
-            st.rerun()  # Força a atualização da página
+            # Remover st.rerun() para evitar atualizações contínuas
 
 # Função para gerar uma cor escura
 def gerar_cor_escura():
@@ -132,7 +132,7 @@ def exibir_tabela():
             st.session_state.funcionarios_data.drop(index, inplace=True)
             st.session_state.funcionarios_data.reset_index(drop=True, inplace=True)
             st.session_state.cores = None  # Limpar as cores para garantir a recalculação
-            st.rerun()  # Força a atualização da página
+            # Remover st.rerun() para evitar atualizações contínuas
 
 # Função para exibir calendário de férias
 def exibir_calendario():
