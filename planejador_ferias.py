@@ -20,19 +20,16 @@ def configurar_gspread():
     # Carregar credenciais do GitHub Secrets
     creds_json = os.getenv('GOOGLE_SHEET_CREDENTIALS')
 
-    # Verifique se as credenciais foram carregadas corretamente
     if not creds_json:
         st.error("As credenciais do Google Sheets não foram encontradas. Verifique se o secret está configurado corretamente no GitHub.")
         return None
 
-    # Carregue as credenciais
     try:
-        creds = json.loads(creds_json)  # Use loads ao invés de load
+        creds = json.loads(creds_json)
     except json.JSONDecodeError as e:
         st.error(f"Erro ao decodificar JSON das credenciais: {e}")
         return None
 
-    # Autoriza o gspread
     try:
         credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds, scope)
         client = gspread.authorize(credentials)
@@ -40,6 +37,7 @@ def configurar_gspread():
     except Exception as e:
         st.error(f"Erro ao configurar gspread: {e}")
         return None
+
 
 
 # Nome das colunas na planilha
@@ -64,10 +62,15 @@ def load_data():
 # Função para salvar dados no Google Sheets
 def save_data(data):
     sheet = configurar_gspread()
+    if sheet is None:
+        st.error("Não foi possível salvar os dados porque a conexão com o Google Sheets falhou.")
+        return  # Retorna se não conseguir acessar a planilha
+
     sheet.clear()  # Limpa todos os dados existentes
     sheet.append_row(COLUNAS)  # Adiciona o cabeçalho
     for index, row in data.iterrows():
         sheet.append_row(row.tolist())
+
 
 # Função para adicionar ou editar funcionário
 def gerenciar_funcionarios():
@@ -214,6 +217,11 @@ st.title(":palm_tree: Planejamento de Férias")
 
 if 'funcionarios_data' not in st.session_state:
     st.session_state.funcionarios_data = load_data()
+
+# Se load_data() retornar um DataFrame vazio, você pode inicializar também para evitar erros
+if st.session_state.funcionarios_data.empty:
+    st.session_state.funcionarios_data = pd.DataFrame(columns=COLUNAS)
+
 
 st.session_state.setdefault('edit_mode', False)
 st.session_state.setdefault('edit_index', None)
