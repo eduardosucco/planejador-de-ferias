@@ -23,12 +23,11 @@ def load_data():
 # Função para salvar dados no Supabase
 def save_data(funcionario_data):
     try:
-        for _, row in funcionario_data.iterrows():
-            row_dict = row.to_dict()
-            row_dict.pop('id', None)  # Remover 'id' se existir
-            supabase.table('planejamento_ferias').insert(row_dict).execute()
+        response = supabase.table('planejamento_ferias').insert(funcionario_data.to_dict(orient='records')).execute()
+        return response.data  # Retorna a lista de registros inseridos com seus IDs
     except Exception as e:
         st.error(f"Erro ao inserir dados: {e}")
+        return []
 
 # Função para deletar um funcionário do Supabase
 def delete_funcionario(funcionario_id):
@@ -60,7 +59,6 @@ def gerenciar_funcionarios():
 
         submit_button = st.form_submit_button("Salvar")
 
-        # Condicional para evitar atualização automática
         if submit_button:
             novo_funcionario = pd.DataFrame({
                 "funcionario": [funcionario],
@@ -71,11 +69,17 @@ def gerenciar_funcionarios():
             })
 
             if st.session_state.edit_mode:
+                # Atualiza o funcionário existente
                 st.session_state.funcionarios_data.iloc[st.session_state.edit_index] = novo_funcionario.iloc[0]
+                # Não precisa inserir novamente no banco pois já existe
             else:
-                st.session_state.funcionarios_data = pd.concat([st.session_state.funcionarios_data, novo_funcionario], ignore_index=True)
+                # Insere novo funcionário no banco de dados
+                inserted_data = save_data(novo_funcionario)
+                # Atualiza o DataFrame com os IDs inseridos
+                if inserted_data:
+                    novo_funcionario['id'] = [item['id'] for item in inserted_data]  # Adiciona os IDs ao DataFrame
+                    st.session_state.funcionarios_data = pd.concat([st.session_state.funcionarios_data, novo_funcionario], ignore_index=True)
 
-            save_data(novo_funcionario)
             st.session_state.show_form = False
             reset_edit_mode()
 
@@ -131,7 +135,7 @@ def exibir_tabela():
             st.session_state.funcionarios_data.drop(index, inplace=True)
             st.session_state.funcionarios_data.reset_index(drop=True, inplace=True)
             st.session_state.cores = None  # Limpar as cores para recalcular
-            st.rerun()  # Recarregar a página após a exclusão
+            st.experimental_rerun()  # Recarregar a página após a exclusão
 
 # Função para exibir calendário de férias
 def exibir_calendario():
