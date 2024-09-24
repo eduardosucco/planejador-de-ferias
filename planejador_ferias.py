@@ -131,7 +131,7 @@ def exibir_tabela():
             st.session_state.funcionarios_data.drop(index, inplace=True)
             st.session_state.funcionarios_data.reset_index(drop=True, inplace=True)
             st.session_state.cores = None  # Limpar as cores para recalcular
-            st.experimental_rerun()  # Recarregar a página após a exclusão
+            st.rerun()  # Recarregar a página após a exclusão
 
 # Função para exibir calendário de férias
 def exibir_calendario():
