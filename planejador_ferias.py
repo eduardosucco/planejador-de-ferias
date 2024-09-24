@@ -3,74 +3,37 @@ import pandas as pd
 from datetime import datetime, timedelta
 from streamlit_calendar import calendar
 import random
-import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from supabase import create_client, Client
 import os
 import json
-import io
 
-# Configuração do Google Sheets
-SHEET_NAME = 'planejamento_ferias'
-SHEET_ID = '1niEXvLi2C5qXOXy2bn5G1i-2L4UBPBiKlcGO_9LK5nw'
+# Configurações do Supabase
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Configurações de API do Google Sheets
-def configurar_gspread():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+# Nome das colunas na tabela
+COLUNAS = ["id", "funcionario", "area", "inicio", "fim", "duracao"]
 
-    # Carregar credenciais do GitHub Secrets
-    creds_json = os.getenv('GOOGLE_SHEET_CREDENTIALS')
-
-    if not creds_json:
-        st.error("As credenciais do Google Sheets não foram encontradas. Verifique se o secret está configurado corretamente no GitHub.")
-        return None
-
-    try:
-        creds = json.loads(creds_json)
-    except json.JSONDecodeError as e:
-        st.error(f"Erro ao decodificar JSON das credenciais: {e}")
-        return None
-
-    try:
-        credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds, scope)
-        client = gspread.authorize(credentials)
-        return client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
-    except Exception as e:
-        st.error(f"Erro ao configurar gspread: {e}")
-        return None
-
-
-
-# Nome das colunas na planilha
-COLUNAS = ["ID", "Funcionário", "Área", "Início", "Fim", "Duração (dias)"]
-
-# Função para carregar dados do Google Sheets
+# Função para carregar dados do Supabase
 def load_data():
-    sheet = configurar_gspread()
-    
-    if sheet is None:
-        return pd.DataFrame(columns=COLUNAS)  # Retorna um DataFrame vazio se não conseguir acessar a planilha
+    response = supabase.table('planejamento_ferias').select('*').execute()
+    if response.status_code == 200:
+        data = response.data
+        if data:
+            df = pd.DataFrame(data)
+            df['duracao'] = df['duracao'].fillna(0).astype(int)  # Convertendo duração para inteiro
+            return df
+    return pd.DataFrame(columns=COLUNAS)
 
-    data = sheet.get_all_records()
-    df = pd.DataFrame(data, columns=COLUNAS)
-    if df.empty:
-        df = pd.DataFrame(columns=COLUNAS)
-    else:
-        df['Duração (dias)'] = df['Duração (dias)'].astype(float).fillna(0).astype(int)
-    return df
-
-
-# Função para salvar dados no Google Sheets
+# Função para salvar dados no Supabase
 def save_data(data):
-    sheet = configurar_gspread()
-    if sheet is None:
-        st.error("Não foi possível salvar os dados porque a conexão com o Google Sheets falhou.")
-        return  # Retorna se não conseguir acessar a planilha
-
-    sheet.clear()  # Limpa todos os dados existentes
-    sheet.append_row(COLUNAS)  # Adiciona o cabeçalho
-    for index, row in data.iterrows():
-        sheet.append_row(row.tolist())
-
+    # Limpa a tabela existente
+    supabase.table('planejamento_ferias').delete().execute()
+    
+    # Adiciona novos dados
+    for _, row in data.iterrows():
+        supabase.table('planejamento_ferias').insert(row.to_dict()).execute()
 
 # Função para adicionar ou editar funcionário
 def gerenciar_funcionarios():
@@ -97,12 +60,12 @@ def gerenciar_funcionarios():
 
         if st.form_submit_button("Salvar"):
             novo_funcionario = pd.DataFrame({
-                "ID": [len(st.session_state.funcionarios_data) + 1],
-                "Funcionário": [funcionario],
-                "Área": [area],
-                "Início": [inicio.strftime('%d/%m/%Y')],
-                "Fim": [fim.strftime('%d/%m/%Y')],
-                "Duração (dias)": [duracao_dias]
+                "id": [len(st.session_state.funcionarios_data) + 1],
+                "funcionario": [funcionario],
+                "area": [area],
+                "inicio": [inicio.strftime('%Y-%m-%d')],
+                "fim": [fim.strftime('%Y-%m-%d')],
+                "duracao": [duracao_dias]
             })
 
             if st.session_state.edit_mode:
@@ -122,11 +85,11 @@ def gerar_cor_escura():
 def exibir_tabela():
     st.write("### Funcionários e Período de Férias")
     
-    areas = st.session_state.funcionarios_data['Área'].unique()
+    areas = st.session_state.funcionarios_data['area'].unique()
     selected_area = st.selectbox("Filtrar por Área", ["Todas"] + list(areas))
     
     if selected_area != "Todas":
-        data_filtrada = st.session_state.funcionarios_data[st.session_state.funcionarios_data['Área'] == selected_area]
+        data_filtrada = st.session_state.funcionarios_data[st.session_state.funcionarios_data['area'] == selected_area]
     else:
         data_filtrada = st.session_state.funcionarios_data
     
@@ -136,21 +99,21 @@ def exibir_tabela():
     for col, name in zip(cols, col_names):
         col.write(name)
 
-    # Certifique-se de que o dicionário de cores está inicializado corretamente
+    # Inicializa cores
     if 'cores' not in st.session_state or st.session_state.cores is None:
-        funcionarios = data_filtrada['Funcionário'].unique()
+        funcionarios = data_filtrada['funcionario'].unique()
         st.session_state.cores = {nome: gerar_cor_escura() for nome in funcionarios}
 
     cores = st.session_state.cores
 
     for index, row in data_filtrada.iterrows():
         cols = st.columns([1, 3, 2, 2, 1, 1, 1])
-        for col, value in zip(cols, [row["ID"], row["Funcionário"], 
-                                    pd.to_datetime(row["Início"]).strftime('%d/%m/%Y'), 
-                                    pd.to_datetime(row["Fim"]).strftime('%d/%m/%Y'), 
-                                    row["Duração (dias)"]] ):
+        for col, value in zip(cols, [row["id"], row["funcionario"], 
+                                    pd.to_datetime(row["inicio"]).strftime('%d/%m/%Y'), 
+                                    pd.to_datetime(row["fim"]).strftime('%d/%m/%Y'), 
+                                    row["duracao"]] ):
             if col == cols[1]:
-                cor_fundo = cores.get(row["Funcionário"], gerar_cor_escura())  # Gera uma cor se não existir
+                cor_fundo = cores.get(row["funcionario"], gerar_cor_escura())  # Gera uma cor se não existir
                 cor_texto = "#FFFFFF"  # Texto branco para fundo escuro
                 col.markdown(f'<div style="background-color:{cor_fundo}; color:{cor_texto}">{value}</div>', unsafe_allow_html=True)
             else:
@@ -167,14 +130,13 @@ def exibir_tabela():
             st.session_state.cores = None  # Limpar as cores para garantir a recalculação
             st.rerun()  # Força a atualização da página
 
-
 # Função para exibir calendário de férias
 def exibir_calendario():
     st.markdown("---")
     st.write("### Calendário de Férias")
 
     if not st.session_state.funcionarios_data.empty:
-        primeira_data = pd.to_datetime(st.session_state.funcionarios_data['Início'].min(), format='%d/%m/%Y')
+        primeira_data = pd.to_datetime(st.session_state.funcionarios_data['inicio'].min())
     else:
         primeira_data = datetime(2025, 1, 1)
     
@@ -188,24 +150,24 @@ def exibir_calendario():
             "center": "title",
             "right": "prev,next",
         },
-        "eventMaxStack": 10,  # Número máximo de eventos visíveis antes de agrupá-los
-        "eventDisplay": "block",  # Garantir que eventos sejam exibidos como blocos
+        "eventMaxStack": 10,
+        "eventDisplay": "block",
         "locale": "pt-BR"
     }
     
     if 'cores' not in st.session_state:
-        funcionarios = st.session_state.funcionarios_data['Funcionário'].unique()
+        funcionarios = st.session_state.funcionarios_data['funcionario'].unique()
         st.session_state.cores = {nome: gerar_cor_escura() for nome in funcionarios}
 
     cores = st.session_state.cores
     
     eventos = [
         {
-            "title": f"{row['Funcionário']} (Férias)",
-            "start": pd.to_datetime(row['Início'], format='%d/%m/%Y').strftime('%Y-%m-%d'),
-            "end": (pd.to_datetime(row['Fim'], format='%d/%m/%Y') + timedelta(days=1)).strftime('%Y-%m-%d'),
-            "backgroundColor": cores[row['Funcionário']],
-            "textColor": "#FFFFFF"  # Texto branco para fundo escuro
+            "title": f"{row['funcionario']} (Férias)",
+            "start": pd.to_datetime(row['inicio']).strftime('%Y-%m-%d'),
+            "end": (pd.to_datetime(row['fim']) + timedelta(days=1)).strftime('%Y-%m-%d'),
+            "backgroundColor": cores[row['funcionario']],
+            "textColor": "#FFFFFF"
         } 
         for _, row in st.session_state.funcionarios_data.iterrows()
     ]
@@ -221,7 +183,6 @@ if 'funcionarios_data' not in st.session_state:
 # Se load_data() retornar um DataFrame vazio, você pode inicializar também para evitar erros
 if st.session_state.funcionarios_data.empty:
     st.session_state.funcionarios_data = pd.DataFrame(columns=COLUNAS)
-
 
 st.session_state.setdefault('edit_mode', False)
 st.session_state.setdefault('edit_index', None)
