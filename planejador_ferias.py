@@ -45,9 +45,17 @@ def gerenciar_funcionarios():
         
         today = datetime.now()
         next_year = today.year + 1
-        inicio = st.date_input("Data de Início", value=datetime(next_year, 1, 1).date(), min_value=datetime(next_year, 1, 1).date())
-        fim = st.date_input("Data de Fim", value=datetime(next_year, 1, 7).date(), min_value=inicio)
+        jan_1 = datetime(next_year, 1, 1).date()
+        dec_31 = datetime(next_year, 12, 31).date()
 
+        inicio_fim = st.date_input(
+            "Selecione o período de férias",
+            value=(jan_1, datetime(next_year, 1, 7).date()),  # Valor padrão
+            min_value=jan_1,
+            max_value=dec_31,
+        )
+        
+        inicio, fim = inicio_fim
         duracao_dias = (fim - inicio).days
 
         if st.form_submit_button("Salvar"):
