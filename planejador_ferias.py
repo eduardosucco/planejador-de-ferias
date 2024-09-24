@@ -28,13 +28,13 @@ def load_data():
 # Função para salvar dados no Supabase
 def save_data(data):
     for _, row in data.iterrows():
-        # Converta a linha em um dicionário
         row_dict = row.to_dict()
-        # Remova a chave 'id' para deixar que o banco de dados gere o ID automaticamente
         row_dict.pop('id', None)  # Garantir que a chave 'id' não esteja presente
-        # Tente inserir o dicionário na tabela
-        supabase.table('planejamento_ferias').insert(row_dict).execute()
-
+        print("Dados a serem inseridos:", row_dict)  # Verifique os dados aqui
+        try:
+            supabase.table('planejamento_ferias').insert(row_dict).execute()
+        except Exception as e:
+            print("Erro ao inserir dados:", e)  # Exiba o erro completo
 
 # Função para deletar um funcionário do Supabase
 def delete_funcionario(funcionario_id):
@@ -187,7 +187,7 @@ if 'funcionarios_data' not in st.session_state:
     st.session_state.funcionarios_data = load_data()
 
 if st.session_state.funcionarios_data.empty:
-    st.session_state.funcionarios_data = pd.DataFrame(columns=COLUNAS)
+    st.session_state.funcionarios_data = pd.DataFrame(columns=["funcionario", "area", "inicio", "fim", "duracao"])
 
 st.session_state.setdefault('edit_mode', False)
 st.session_state.setdefault('edit_index', None)
