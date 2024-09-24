@@ -27,13 +27,14 @@ def load_data():
 
 # Função para salvar dados no Supabase
 def save_data(data):
-    # Adiciona novos dados
     for _, row in data.iterrows():
-        # O método insert pode ser usado para adicionar uma nova linha
+        # Converta a linha em um dicionário
         row_dict = row.to_dict()
         # Remova a chave 'id' para deixar que o banco de dados gere o ID automaticamente
-        row_dict.pop('id', None)
+        row_dict.pop('id', None)  # Garantir que a chave 'id' não esteja presente
+        # Tente inserir o dicionário na tabela
         supabase.table('planejamento_ferias').insert(row_dict).execute()
+
 
 # Função para deletar um funcionário do Supabase
 def delete_funcionario(funcionario_id):
@@ -76,7 +77,7 @@ def gerenciar_funcionarios():
             else:
                 st.session_state.funcionarios_data = pd.concat([st.session_state.funcionarios_data, novo_funcionario], ignore_index=True)
 
-            save_data(st.session_state.funcionarios_data)
+            save_data(st.session_state.funcionarios_data)  # Aqui você já está removendo o ID na função save_data
             st.session_state.show_form = False
             st.rerun()  # Força a atualização da página
 
