@@ -16,27 +16,31 @@ SHEET_ID = '1niEXvLi2C5qXOXy2bn5G1i-2L4UBPBiKlcGO_9LK5nw'
 # Configurações de API do Google Sheets
 def configurar_gspread():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    
+
     # Carregar credenciais do GitHub Secrets
     creds_json = os.getenv('GOOGLE_SHEET_CREDENTIALS')
-    
+
     # Verifique se as credenciais foram carregadas corretamente
     if not creds_json:
         st.error("As credenciais do Google Sheets não foram encontradas. Verifique se o secret está configurado corretamente no GitHub.")
         return None
-    
+
     # Carregue as credenciais
     try:
-        creds = json.load(io.StringIO(creds_json))
+        creds = json.loads(creds_json)  # Use loads ao invés de load
     except json.JSONDecodeError as e:
         st.error(f"Erro ao decodificar JSON das credenciais: {e}")
         return None
-    
-    # Autoriza o gspread
-    credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds, scope)
-    client = gspread.authorize(credentials)
 
-    return client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+    # Autoriza o gspread
+    try:
+        credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds, scope)
+        client = gspread.authorize(credentials)
+        return client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
+    except Exception as e:
+        st.error(f"Erro ao configurar gspread: {e}")
+        return None
+
 
 # Nome das colunas na planilha
 COLUNAS = ["ID", "Funcionário", "Área", "Início", "Fim", "Duração (dias)"]
@@ -44,6 +48,10 @@ COLUNAS = ["ID", "Funcionário", "Área", "Início", "Fim", "Duração (dias)"]
 # Função para carregar dados do Google Sheets
 def load_data():
     sheet = configurar_gspread()
+    
+    if sheet is None:
+        return pd.DataFrame(columns=COLUNAS)  # Retorna um DataFrame vazio se não conseguir acessar a planilha
+
     data = sheet.get_all_records()
     df = pd.DataFrame(data, columns=COLUNAS)
     if df.empty:
@@ -51,6 +59,7 @@ def load_data():
     else:
         df['Duração (dias)'] = df['Duração (dias)'].astype(float).fillna(0).astype(int)
     return df
+
 
 # Função para salvar dados no Google Sheets
 def save_data(data):
