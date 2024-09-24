@@ -16,25 +16,24 @@ COLUNAS = ["id", "funcionario", "area", "inicio", "fim", "duracao"]
 
 # Função para carregar dados do Supabase
 def load_data():
-    response = supabase.table('planejamento_ferias').select('*').execute()  
-    data = response.data  
+    response = supabase.table('planejamento_ferias').select('*').execute()
+    data = response.data
 
-    if data:  
-        df = pd.DataFrame(data)  
+    if data:
+        df = pd.DataFrame(data)
         return df
     else:
-        return pd.DataFrame(columns=COLUNAS)  
+        return pd.DataFrame(columns=COLUNAS)
 
 # Função para salvar dados no Supabase
 def save_data(data):
     for _, row in data.iterrows():
         row_dict = row.to_dict()
         row_dict.pop('id', None)  # Garantir que a chave 'id' não esteja presente
-        print("Dados a serem inseridos:", row_dict)  # Verifique os dados aqui
         try:
             supabase.table('planejamento_ferias').insert(row_dict).execute()
         except Exception as e:
-            print("Erro ao inserir dados:", e)  # Exiba o erro completo
+            st.error(f"Erro ao inserir dados: {e}")  # Exibir erro no Streamlit
 
 # Função para deletar um funcionário do Supabase
 def delete_funcionario(funcionario_id):
@@ -53,14 +52,12 @@ def gerenciar_funcionarios():
 
         inicio_fim = st.date_input(
             "Selecione o período de férias",
-            format="DD/MM/YYYY",
             value=(jan_1, datetime(next_year, 1, 7).date()),  # Valor padrão
             min_value=jan_1,
             max_value=dec_31,
         )
         
         inicio, fim = inicio_fim
-        
         duracao_dias = (fim - inicio).days
 
         if st.form_submit_button("Salvar"):
@@ -77,8 +74,10 @@ def gerenciar_funcionarios():
             else:
                 st.session_state.funcionarios_data = pd.concat([st.session_state.funcionarios_data, novo_funcionario], ignore_index=True)
 
-            save_data(st.session_state.funcionarios_data)  # Aqui você já está removendo o ID na função save_data
+            save_data(novo_funcionario)  # Salvar apenas os novos dados inseridos
             st.session_state.show_form = False
+            st.session_state.edit_mode = False
+            st.session_state.edit_index = None
             st.rerun()  # Força a atualização da página
 
 # Função para gerar uma cor escura
@@ -134,7 +133,6 @@ def exibir_tabela():
             st.session_state.funcionarios_data.reset_index(drop=True, inplace=True)
             st.session_state.cores = None  # Limpar as cores para garantir a recalculação
             st.rerun()  # Força a atualização da página
-  
 
 # Função para exibir calendário de férias
 def exibir_calendario():
@@ -172,7 +170,7 @@ def exibir_calendario():
             "title": f"{row['funcionario']} (Férias)",
             "start": pd.to_datetime(row['inicio']).strftime('%Y-%m-%d'),
             "end": (pd.to_datetime(row['fim']) + timedelta(days=1)).strftime('%Y-%m-%d'),
-            "backgroundColor": cores[row['funcionario']],
+            "backgroundColor": cores.get(row['funcionario'], gerar_cor_escura()),
             "textColor": "#FFFFFF"
         } 
         for _, row in st.session_state.funcionarios_data.iterrows()
