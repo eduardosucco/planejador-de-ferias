@@ -50,6 +50,7 @@ def gerenciar_funcionarios():
 
         inicio_fim = st.date_input(
             "Selecione o período de férias",
+            format="DD/MM/YYYY",
             value=(jan_1, datetime(next_year, 1, 7).date()),  # Valor padrão
             min_value=jan_1,
             max_value=dec_31,
