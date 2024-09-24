@@ -5,7 +5,6 @@ from streamlit_calendar import calendar
 import random
 from supabase import create_client, Client
 import os
-import json
 
 # Configurações do Supabase
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -17,25 +16,23 @@ COLUNAS = ["id", "funcionario", "area", "inicio", "fim", "duracao"]
 
 # Função para carregar dados do Supabase
 def load_data():
-    response = supabase.table('planejamento_ferias').select('*').execute()  # use .execute() em vez de .execu
-    data = response.data  # Acesse os dados diretamente
+    response = supabase.table('planejamento_ferias').select('*').execute()  
+    data = response.data  
 
-    if data:  # Verifica se há dados retornados
-        df = pd.DataFrame(data)  # Cria DataFrame a partir dos dados
+    if data:  
+        df = pd.DataFrame(data)  
         return df
     else:
-        return pd.DataFrame(columns=COLUNAS)  # Retorna um DataFrame vazio se não houver dados
+        return pd.DataFrame(columns=COLUNAS)  
 
 # Função para salvar dados no Supabase
 def save_data(data):
-    # Limpa a tabela existente apenas se realmente necessário
-    # supabase.table('planejamento_ferias').delete().execute()  # Remova essa linha
-
-    # Adiciona novos dados
     for _, row in data.iterrows():
-        # O método insert pode ser usado para adicionar uma nova linha
         supabase.table('planejamento_ferias').insert(row.to_dict()).execute()
 
+# Função para deletar um funcionário do Supabase
+def delete_funcionario(id):
+    supabase.table('planejamento_ferias').delete().eq('id', id).execute()
 
 # Função para adicionar ou editar funcionário
 def gerenciar_funcionarios():
@@ -51,13 +48,12 @@ def gerenciar_funcionarios():
         inicio_fim = st.date_input(
             "Selecione o período de férias",
             format="DD/MM/YYYY",
-            value=(jan_1, datetime(next_year, 1, 7).date()),  # Valor padrão
+            value=(jan_1, datetime(next_year, 1, 7).date()),  
             min_value=jan_1,
             max_value=dec_31,
         )
         
         inicio, fim = inicio_fim
-        
         duracao_dias = (fim - inicio).days
 
         if st.form_submit_button("Salvar"):
@@ -77,7 +73,7 @@ def gerenciar_funcionarios():
 
             save_data(st.session_state.funcionarios_data)
             st.session_state.show_form = False
-            st.rerun()  # Força a atualização da página
+            st.rerun()
 
 # Função para gerar uma cor escura
 def gerar_cor_escura():
@@ -101,7 +97,6 @@ def exibir_tabela():
     for col, name in zip(cols, col_names):
         col.write(name)
 
-    # Inicializa cores
     if 'cores' not in st.session_state or st.session_state.cores is None:
         funcionarios = data_filtrada['funcionario'].unique()
         st.session_state.cores = {nome: gerar_cor_escura() for nome in funcionarios}
@@ -115,8 +110,8 @@ def exibir_tabela():
                                     pd.to_datetime(row["fim"]).strftime('%d/%m/%Y'), 
                                     row["duracao"]] ):
             if col == cols[1]:
-                cor_fundo = cores.get(row["funcionario"], gerar_cor_escura())  # Gera uma cor se não existir
-                cor_texto = "#FFFFFF"  # Texto branco para fundo escuro
+                cor_fundo = cores.get(row["funcionario"], gerar_cor_escura())
+                cor_texto = "#FFFFFF"  
                 col.markdown(f'<div style="background-color:{cor_fundo}; color:{cor_texto}">{value}</div>', unsafe_allow_html=True)
             else:
                 col.write(value)
@@ -125,12 +120,13 @@ def exibir_tabela():
             st.session_state.edit_index = index
             st.session_state.edit_mode = True
             st.session_state.show_form = True
+        
         if cols[6].button("❌", key=f"remove_{index}"):
+            delete_funcionario(row["id"])  # Chama a função para deletar no Supabase
             st.session_state.funcionarios_data.drop(index, inplace=True)
             st.session_state.funcionarios_data.reset_index(drop=True, inplace=True)
-            save_data(st.session_state.funcionarios_data)
-            st.session_state.cores = None  # Limpar as cores para garantir a recalculação
-            st.rerun()  # Força a atualização da página
+            st.session_state.cores = None  
+            st.rerun()  
 
 # Função para exibir calendário de férias
 def exibir_calendario():
@@ -182,7 +178,6 @@ st.title(":palm_tree: Planejamento de Férias")
 if 'funcionarios_data' not in st.session_state:
     st.session_state.funcionarios_data = load_data()
 
-# Se load_data() retornar um DataFrame vazio, você pode inicializar também para evitar erros
 if st.session_state.funcionarios_data.empty:
     st.session_state.funcionarios_data = pd.DataFrame(columns=COLUNAS)
 
