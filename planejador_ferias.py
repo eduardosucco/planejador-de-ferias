@@ -6,18 +6,24 @@ import random
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import os
+import json
+import io
 
 # Configuração do Google Sheets
-SHEET_NAME = 'planejamento_ferias'  # Substitua pelo nome da sua planilha
-SHEET_ID = '1niEXvLi2C5qXOXy2bn5G1i-2L4UBPBiKlcGO_9LK5nw'  # ID da sua planilha
+SHEET_NAME = 'planejamento_ferias'
+SHEET_ID = '1niEXvLi2C5qXOXy2bn5G1i-2L4UBPBiKlcGO_9LK5nw'
 
 # Configurações de API do Google Sheets
 def configurar_gspread():
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
     
-    # Carrega as credenciais do arquivo JSON localizado na raiz do projeto
-    creds = ServiceAccountCredentials.from_json_keyfile_name('integracao_gsheet.json', scope)
-    client = gspread.authorize(creds)
+    # Carregar credenciais do GitHub Secrets
+    creds_json = os.getenv('GOOGLE_SHEET_CREDENTIALS')
+    creds = json.load(io.StringIO(creds_json))
+    
+    # Autoriza o gspread
+    credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds, scope)
+    client = gspread.authorize(credentials)
 
     return client.open_by_key(SHEET_ID).worksheet(SHEET_NAME)
 
