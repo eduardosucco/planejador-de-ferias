@@ -18,26 +18,24 @@ COLUNAS = ["id", "funcionario", "area", "inicio", "fim", "duracao"]
 def load_data():
     response = supabase.table('planejamento_ferias').select('*').execute()
     data = response.data
-
-    if data:
-        df = pd.DataFrame(data)
-        return df
-    else:
-        return pd.DataFrame(columns=COLUNAS)
+    return pd.DataFrame(data) if data else pd.DataFrame(columns=COLUNAS)
 
 # Função para salvar dados no Supabase
-def save_data(data):
-    for _, row in data.iterrows():
-        row_dict = row.to_dict()
-        row_dict.pop('id', None)  # Garantir que a chave 'id' não esteja presente
-        try:
+def save_data(funcionario_data):
+    try:
+        for _, row in funcionario_data.iterrows():
+            row_dict = row.to_dict()
+            row_dict.pop('id', None)  # Remover 'id' se existir
             supabase.table('planejamento_ferias').insert(row_dict).execute()
-        except Exception as e:
-            st.error(f"Erro ao inserir dados: {e}")  # Exibir erro no Streamlit
+    except Exception as e:
+        st.error(f"Erro ao inserir dados: {e}")
 
 # Função para deletar um funcionário do Supabase
 def delete_funcionario(funcionario_id):
-    supabase.table('planejamento_ferias').delete().eq('id', funcionario_id).execute()
+    try:
+        supabase.table('planejamento_ferias').delete().eq('id', funcionario_id).execute()
+    except Exception as e:
+        st.error(f"Erro ao deletar funcionário: {e}")
 
 # Função para adicionar ou editar funcionário
 def gerenciar_funcionarios():
@@ -47,17 +45,9 @@ def gerenciar_funcionarios():
         
         today = datetime.now()
         next_year = today.year + 1
-        jan_1 = datetime(next_year, 1, 1).date()
-        dec_31 = datetime(next_year, 12, 31).date()
+        inicio = st.date_input("Data de Início", value=datetime(next_year, 1, 1).date(), min_value=datetime(next_year, 1, 1).date())
+        fim = st.date_input("Data de Fim", value=datetime(next_year, 1, 7).date(), min_value=inicio)
 
-        inicio_fim = st.date_input(
-            "Selecione o período de férias",
-            value=(jan_1, datetime(next_year, 1, 7).date()),  # Valor padrão
-            min_value=jan_1,
-            max_value=dec_31,
-        )
-        
-        inicio, fim = inicio_fim
         duracao_dias = (fim - inicio).days
 
         if st.form_submit_button("Salvar"):
@@ -74,11 +64,13 @@ def gerenciar_funcionarios():
             else:
                 st.session_state.funcionarios_data = pd.concat([st.session_state.funcionarios_data, novo_funcionario], ignore_index=True)
 
-            save_data(novo_funcionario)  # Salvar apenas os novos dados inseridos
+            save_data(novo_funcionario)
             st.session_state.show_form = False
-            st.session_state.edit_mode = False
-            st.session_state.edit_index = None
-            # Remover st.rerun() para evitar atualizações contínuas
+            reset_edit_mode()
+
+def reset_edit_mode():
+    st.session_state.edit_mode = False
+    st.session_state.edit_index = None
 
 # Função para gerar uma cor escura
 def gerar_cor_escura():
@@ -87,17 +79,15 @@ def gerar_cor_escura():
 # Função para exibir tabela de funcionários
 def exibir_tabela():
     st.write("### Funcionários e Período de Férias")
-    
+
     areas = st.session_state.funcionarios_data['area'].unique()
     selected_area = st.selectbox("Filtrar por Área", ["Todas"] + list(areas))
-    
-    if selected_area != "Todas":
-        data_filtrada = st.session_state.funcionarios_data[st.session_state.funcionarios_data['area'] == selected_area]
-    else:
-        data_filtrada = st.session_state.funcionarios_data
-    
+
+    data_filtrada = (st.session_state.funcionarios_data[st.session_state.funcionarios_data['area'] == selected_area]
+                     if selected_area != "Todas" else st.session_state.funcionarios_data)
+
     col_names = ["ID", "Funcionário", "Início", "Fim", "Duração (dias)", "Editar", "Remover"]
-    
+
     cols = st.columns([1, 3, 2, 2, 1, 1, 1])
     for col, name in zip(cols, col_names):
         col.write(name)
@@ -110,14 +100,13 @@ def exibir_tabela():
 
     for index, row in data_filtrada.iterrows():
         cols = st.columns([1, 3, 2, 2, 1, 1, 1])
-        for col, value in zip(cols, [row["id"], row["funcionario"], 
-                                    pd.to_datetime(row["inicio"]).strftime('%d/%m/%Y'), 
-                                    pd.to_datetime(row["fim"]).strftime('%d/%m/%Y'), 
-                                    row["duracao"]] ):
+        for col, value in zip(cols, [row["id"], row["funcionario"],
+                                      pd.to_datetime(row["inicio"]).strftime('%d/%m/%Y'),
+                                      pd.to_datetime(row["fim"]).strftime('%d/%m/%Y'),
+                                      row["duracao"]]):
             if col == cols[1]:
                 cor_fundo = cores.get(row["funcionario"], gerar_cor_escura())
-                cor_texto = "#FFFFFF"  
-                col.markdown(f'<div style="background-color:{cor_fundo}; color:{cor_texto}">{value}</div>', unsafe_allow_html=True)
+                col.markdown(f'<div style="background-color:{cor_fundo}; color:#FFFFFF">{value}</div>', unsafe_allow_html=True)
             else:
                 col.write(value)
 
@@ -127,12 +116,10 @@ def exibir_tabela():
             st.session_state.show_form = True
         
         if cols[6].button("❌", key=f"remove_{index}"):
-            funcionario_id = row["id"]  # ID do funcionário a ser removido
-            delete_funcionario(funcionario_id)  # Deleta do banco
+            delete_funcionario(row["id"])
             st.session_state.funcionarios_data.drop(index, inplace=True)
             st.session_state.funcionarios_data.reset_index(drop=True, inplace=True)
-            st.session_state.cores = None  # Limpar as cores para garantir a recalculação
-            # Remover st.rerun() para evitar atualizações contínuas
+            st.session_state.cores = None  # Limpar as cores para recalcular
 
 # Função para exibir calendário de férias
 def exibir_calendario():
@@ -143,7 +130,7 @@ def exibir_calendario():
         primeira_data = pd.to_datetime(st.session_state.funcionarios_data['inicio'].min())
     else:
         primeira_data = datetime(2025, 1, 1)
-    
+
     calendar_options = {
         "editable": "true",
         "selectable": "true",
@@ -158,13 +145,13 @@ def exibir_calendario():
         "eventDisplay": "block",
         "locale": "pt-BR"
     }
-    
+
     if 'cores' not in st.session_state:
         funcionarios = st.session_state.funcionarios_data['funcionario'].unique()
         st.session_state.cores = {nome: gerar_cor_escura() for nome in funcionarios}
 
     cores = st.session_state.cores
-    
+
     eventos = [
         {
             "title": f"{row['funcionario']} (Férias)",
@@ -172,10 +159,10 @@ def exibir_calendario():
             "end": (pd.to_datetime(row['fim']) + timedelta(days=1)).strftime('%Y-%m-%d'),
             "backgroundColor": cores.get(row['funcionario'], gerar_cor_escura()),
             "textColor": "#FFFFFF"
-        } 
+        }
         for _, row in st.session_state.funcionarios_data.iterrows()
     ]
-    
+
     calendar(events=eventos, options=calendar_options)
 
 # Inicialização
@@ -185,7 +172,7 @@ if 'funcionarios_data' not in st.session_state:
     st.session_state.funcionarios_data = load_data()
 
 if st.session_state.funcionarios_data.empty:
-    st.session_state.funcionarios_data = pd.DataFrame(columns=["funcionario", "area", "inicio", "fim", "duracao"])
+    st.session_state.funcionarios_data = pd.DataFrame(columns=COLUNAS)
 
 st.session_state.setdefault('edit_mode', False)
 st.session_state.setdefault('edit_index', None)
@@ -194,7 +181,7 @@ st.session_state.setdefault('show_form', False)
 with st.expander("Adicionar Novo Funcionário", expanded=st.session_state.show_form):
     if st.button("Adicionar Novo Funcionário"):
         st.session_state.show_form = True
-        st.session_state.edit_mode = False
+        reset_edit_mode()
 
     if st.session_state.show_form:
         gerenciar_funcionarios()
