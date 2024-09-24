@@ -28,12 +28,14 @@ def load_data():
 
 # Função para salvar dados no Supabase
 def save_data(data):
-    # Limpa a tabela existente
-    supabase.table('planejamento_ferias').delete().execute()
-    
+    # Limpa a tabela existente apenas se realmente necessário
+    # supabase.table('planejamento_ferias').delete().execute()  # Remova essa linha
+
     # Adiciona novos dados
     for _, row in data.iterrows():
+        # O método insert pode ser usado para adicionar uma nova linha
         supabase.table('planejamento_ferias').insert(row.to_dict()).execute()
+
 
 # Função para adicionar ou editar funcionário
 def gerenciar_funcionarios():
