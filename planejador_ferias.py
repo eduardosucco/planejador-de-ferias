@@ -70,8 +70,15 @@ def gerenciar_funcionarios():
 
             if st.session_state.edit_mode:
                 # Atualiza o funcionário existente
-                st.session_state.funcionarios_data.iloc[st.session_state.edit_index] = novo_funcionario.iloc[0]
-                # Não precisa inserir novamente no banco pois já existe
+                st.session_state.funcionarios_data.iloc[st.session_state.edit_index, 1:] = novo_funcionario.iloc[0, 1:]
+                # Atualiza no banco de dados
+                funcionario_id = st.session_state.funcionarios_data.iloc[st.session_state.edit_index]["id"]
+                delete_funcionario(funcionario_id)  # Remove o funcionário antigo
+                inserted_data = save_data(novo_funcionario)  # Insere o novo com as atualizações
+                if inserted_data:
+                    novo_funcionario['id'] = [item['id'] for item in inserted_data]  # Atualiza o ID
+                    st.session_state.funcionarios_data.iloc[st.session_state.edit_index, 0] = novo_funcionario['id'][0]
+
             else:
                 # Insere novo funcionário no banco de dados
                 inserted_data = save_data(novo_funcionario)
