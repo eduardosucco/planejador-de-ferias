@@ -50,16 +50,18 @@ def gerenciar_funcionarios():
 
         inicio_fim = st.date_input(
             "Selecione o período de férias",
-            format="DD/MM/YYYY",
             value=(jan_1, datetime(next_year, 1, 7).date()),  # Valor padrão
             min_value=jan_1,
             max_value=dec_31,
         )
-        
+
         inicio, fim = inicio_fim
         duracao_dias = (fim - inicio).days
 
-        if st.form_submit_button("Salvar"):
+        submit_button = st.form_submit_button("Salvar")
+
+        # Condicional para evitar atualização automática
+        if submit_button:
             novo_funcionario = pd.DataFrame({
                 "funcionario": [funcionario],
                 "area": [area],
