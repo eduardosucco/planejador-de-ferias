@@ -17,14 +17,14 @@ COLUNAS = ["id", "funcionario", "area", "inicio", "fim", "duracao"]
 
 # Função para carregar dados do Supabase
 def load_data():
-    response = supabase.table('planejamento_ferias').select('*').execute()
-    if response.status_code == 200:
-        data = response.data
-        if data:
-            df = pd.DataFrame(data)
-            df['duracao'] = df['duracao'].fillna(0).astype(int)  # Convertendo duração para inteiro
-            return df
-    return pd.DataFrame(columns=COLUNAS)
+    response = supabase.table('planejamento_ferias').select('*').execute()  # use .execute() em vez de .execu
+    data = response.data  # Acesse os dados diretamente
+
+    if data:  # Verifica se há dados retornados
+        df = pd.DataFrame(data)  # Cria DataFrame a partir dos dados
+        return df
+    else:
+        return pd.DataFrame(columns=COLUNAS)  # Retorna um DataFrame vazio se não houver dados
 
 # Função para salvar dados no Supabase
 def save_data(data):
