@@ -120,6 +120,7 @@ def exibir_tabela():
             st.session_state.funcionarios_data.drop(index, inplace=True)
             st.session_state.funcionarios_data.reset_index(drop=True, inplace=True)
             st.session_state.cores = None  # Limpar as cores para recalcular
+            st.experimental_rerun()  # Recarregar a página após a exclusão
 
 # Função para exibir calendário de férias
 def exibir_calendario():
@@ -150,7 +151,7 @@ def exibir_calendario():
         funcionarios = st.session_state.funcionarios_data['funcionario'].unique()
         st.session_state.cores = {nome: gerar_cor_escura() for nome in funcionarios}
 
-    cores = st.session_state.cores
+    cores = st.session_state.cores if st.session_state.cores is not None else {}
 
     eventos = [
         {
