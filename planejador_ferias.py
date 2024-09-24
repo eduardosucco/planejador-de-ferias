@@ -19,7 +19,18 @@ def configurar_gspread():
     
     # Carregar credenciais do GitHub Secrets
     creds_json = os.getenv('GOOGLE_SHEET_CREDENTIALS')
-    creds = json.load(io.StringIO(creds_json))
+    
+    # Verifique se as credenciais foram carregadas corretamente
+    if not creds_json:
+        st.error("As credenciais do Google Sheets não foram encontradas. Verifique se o secret está configurado corretamente no GitHub.")
+        return None
+    
+    # Carregue as credenciais
+    try:
+        creds = json.load(io.StringIO(creds_json))
+    except json.JSONDecodeError as e:
+        st.error(f"Erro ao decodificar JSON das credenciais: {e}")
+        return None
     
     # Autoriza o gspread
     credentials = ServiceAccountCredentials.from_json_keyfile_dict(creds, scope)
